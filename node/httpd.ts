@@ -177,18 +177,18 @@ export async function start(config) {
       options.cert = fs.existsSync(options.sslCrt) ? fs.readFileSync(options.sslCrt) : null;
     } catch { /**/ }
   }
-  if (!options.key || !options.cert) log.warn('Cannot read SSL certificate');
+  if (!options.key || !options.cert) log.warn('cannot read SSL certificate');
 
   // process.chdir(path.join(__dirname, '..'));
   if (options.httpPort && options.httpPort > 0) {
     await new Promise((resolve) => {
       const server1 = http.createServer(options, httpRequest);
       server1.on('listening', () => {
-        log.state('WebServer:', { ssl: false, port: options.httpPort, root: options.documentRoot });
+        log.state('http:', { port: options.httpPort, root: options.documentRoot });
         resolve(true);
       });
       server1.on('error', (err) => {
-        log.error('WebServer HTTP:', err.message || err);
+        log.error('http:', err.message || err);
         resolve(false);
       });
       server1.listen(options.httpPort);
@@ -198,11 +198,11 @@ export async function start(config) {
     await new Promise((resolve) => {
       const server2 = http2.createSecureServer(options, httpRequest);
       server2.on('listening', () => {
-        log.state('WebServer:', { ssl: true, port: options.httpsPort, root: options.documentRoot, sslKey: options.sslKey, sslCrt: options.sslCrt });
+        log.state('https:', { port: options.httpsPort, root: options.documentRoot, sslKey: options.sslKey, sslCrt: options.sslCrt });
         resolve(true);
       });
       server2.on('error', (err) => {
-        log.error('WebServer HTTPS:', err.message || err);
+        log.error('https:', err.message || err);
         resolve(false);
       });
       server2.listen(options.httpsPort);

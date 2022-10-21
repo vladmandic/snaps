@@ -18,7 +18,8 @@
     "url": "git+https://github.com/vladmandic/snaps.git"
   },
   "scripts": {
-    "prod": "build --profile production"
+    "start": "build --profile production && node --no-warnings --enable-source-maps dist/snaps.js",
+    "build": "build --profile production"
   },
   "keywords": [],
   "devDependencies": {
