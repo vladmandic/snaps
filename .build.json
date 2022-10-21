@@ -11,7 +11,7 @@
     "serve": ["serve"]
   },
   "lint": {
-    "locations": [ "*.json", "src/**/*.ts" ],
+    "locations": [ "*.json", "src/**/*.ts", "node/**/*.ts" ],
     "rules": { }
   },
   "clean": {
@@ -36,9 +36,7 @@
       "sourcemap": true,
       "treeShaking": true,
       "ignoreAnnotations": true,
-      "platform": "browser",
-      "format": "esm",
-    "banner": { "js": "/*\n  TEMPLATE\n  homepage: <https://github.com/vladmandic/TEMPLATE>\n  author: <https://github.com/vladmandic>'\n*/\n" }
+    "banner": { "js": "/*\n  snaps\n  homepage: <https://github.com/vladmandic/snaps>\n  author: <https://github.com/vladmandic>'\n*/\n" }
     },
     "development": {
       "minify": false
@@ -48,16 +46,24 @@
     },
     "targets": [
       {
-        "name": "application",
+        "name": "client",
         "input": "src/index.ts",
         "output": "dist/index.js",
-        "typings": "types/lib",
-        "typedoc": "typedoc"
+        "format": "esm",
+        "platform": "browser"
+      },
+      {
+        "name": "server",
+        "input": "node/snaps.ts",
+        "output": "dist/snaps.js",
+        "format": "cjs",
+        "platform": "node",
+        "external": ["sharp"]
       }
     ]
   },
   "watch": {
-    "locations": [ "src/**/*" ]
+    "locations": [ "src/**/*", "node/**/*" ]
   },
   "typescript": {
     "allowJs": false

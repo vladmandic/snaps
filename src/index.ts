@@ -1,5 +1,5 @@
-async function main() {
-  console.log('TEMPLATE'); // eslint-disable-line no-console
+async function start() {
+  console.log('snaps'); // eslint-disable-line no-console
 }
 
-window.onload = main;
+window.onload = start;

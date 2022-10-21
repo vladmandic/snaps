@@ -1,4 +1,4 @@
-# TEMPLATE
+# snaps
 
 ## Update:
 - `package.json`: name, description, homepage, issues

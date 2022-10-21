@@ -8,7 +8,7 @@
     "paths": { "tslib": ["./node_modules/tslib/tslib.d.ts"] },
     "lib": ["esnext", "dom"],
     "allowJs": true,
-    "allowSyntheticDefaultImports": false,
+    "allowSyntheticDefaultImports": true,
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     "alwaysStrict": true,
@@ -52,5 +52,5 @@
     "tabSize": 2
   },
   "exclude": ["node_modules/"],
-  "include": ["src"]
+  "include": ["src", "node"]
 }

@@ -1,26 +1,24 @@
 {
-  "name": "@vladmandic/TEMPLATE",
+  "name": "@vladmandic/snaps",
   "version": "0.1.0",
   "description": "TEMPLATE",
   "sideEffects": false,
   "main": "public/index.js",
   "author": "Vladimir Mandic <mandic00@live.com>",
   "bugs": {
-    "url": "https://github.com/vladmandic/TEMPLATE/issues"
+    "url": "https://github.com/vladmandic/snaps/issues"
   },
-  "homepage": "https://vladmandic.github.io/TEMPLATE/index.html",
+  "homepage": "https://vladmandic.github.io/snaps/index.html",
   "license": "MIT",
   "engines": {
     "node": ">=14.0.0"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vladmandic/TEMPLATE.git"
+    "url": "git+https://github.com/vladmandic/snaps.git"
   },
   "scripts": {
-    "dev": "build --profile development",
-    "prod": "build --profile production",
-    "serve": "build --profile serve"
+    "prod": "build --profile production"
   },
   "keywords": [],
   "devDependencies": {
@@ -37,5 +35,10 @@
     "tslib": "^2.4.0",
     "typedoc": "^0.23.15",
     "typescript": "4.8.3"
+  },
+  "dependencies": {
+    "@types/node": "^18.11.3",
+    "@vladmandic/pilogger": "^0.4.6",
+    "sharp": "^0.31.1"
   }
 }
