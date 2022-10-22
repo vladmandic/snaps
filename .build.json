@@ -6,7 +6,7 @@
     "output": ""
   },
   "profiles": {
-    "production": ["clean", "compile", "typings", "typedoc", "lint", "changelog"],
+    "production": ["clean", "compile", "lint"],
     "development": ["serve", "watch", "lint", "compile"],
     "serve": ["serve"]
   },
@@ -36,13 +36,8 @@
       "sourcemap": true,
       "treeShaking": true,
       "ignoreAnnotations": true,
-    "banner": { "js": "/*\n  snaps\n  homepage: <https://github.com/vladmandic/snaps>\n  author: <https://github.com/vladmandic>'\n*/\n" }
-    },
-    "development": {
-      "minify": false
-    },
-    "production": {
-      "minify": true
+      "minify": false,
+      "banner": { "js": "/*\n  snaps\n  homepage: <https://github.com/vladmandic/snaps>\n  author: <https://github.com/vladmandic>'\n*/\n" }
     },
     "targets": [
       {

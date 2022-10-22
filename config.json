@@ -1,0 +1,14 @@
+{
+  "secrets": "secrets.json",
+  "log": "snaps.log",
+  "folder": "images",
+  "index": "images/index.json",
+  "interval": 2,
+  "httpPort": 8000,
+  "httpsPort": 8001,
+  "documentRoot": "public",
+  "sslKey": "node_modules/@vladmandic/build/cert/https.key",
+  "sslCrt": "node_modules/@vladmandic/build/cert/https.crt",
+  "resizeWidth": 1280,
+  "quality": 60
+}

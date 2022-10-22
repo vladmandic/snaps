@@ -4,23 +4,11 @@ import sharp from 'sharp';
 import * as log from '@vladmandic/pilogger';
 import * as httpd from './httpd';
 import * as pkg from '../package.json';
-
-const config = {
-  secrets: 'secrets.json',
-  log: 'snaps.log',
-  folder: 'images',
-  interval: 2,
-  httpPort: 8000,
-  httpsPort: 8001,
-  documentRoot: 'public',
-  sslKey: 'node_modules/@vladmandic/build/cert/https.key',
-  sslCrt: 'node_modules/@vladmandic/build/cert/https.crt',
-  resizeWidth: 1280,
-  quality: 60,
-};
+import * as config from '../config.json';
 
 // any number of objects as `label:url`
 type Secrets = Record<string, string>;
+type Image = { seq: string, file: string, date: Date, input: { name: string, size: number, type: string, resolution: [number, number] }, output: { size: number, resolution: [number, number] } }
 
 // holds updated sequence number
 const seq: Record<string, number> = {};
@@ -72,18 +60,21 @@ async function saveImage(name: string, res: Response) {
     .withMetadata({ exif: getExif() })
     .toFile(file);
   seq[name]++;
-  log.data('image:', { seq: num, file, input: { name, size: data.size, type: data.type, resolution: [metadata.width, metadata.height] }, output: { size: image.size, resolution: [image.width, image.height] } });
+  const rec: Image = { seq: num, file, date: new Date(), input: { name, size: data.size, type: data.type, resolution: [metadata.width, metadata.height] }, output: { size: image.size, resolution: [image.width, image.height] } };
+  fs.appendFileSync(config.index, JSON.stringify(rec) + '\n');
+  log.data('image:', rec);
 }
 
 async function runInterval(secrets: Secrets) {
   for (const [name, url] of Object.entries(secrets)) {
     fetch(url)
       .then((res) => saveImage(name, res))
-      .catch((err) => log.warn(err));
+      .catch((err) => log.warn('fetch:', { host: err?.cause?.hostname, syscall: err?.cause?.syscall, code: err?.cause?.code }));
   }
 }
 
 async function main() {
+  log.configure({ inspect: { breakLength: 500 } });
   if (config.log?.length > 0) log.logFile(config.log);
   log.headerJson();
   if (!fs.existsSync(config.secrets)) {
