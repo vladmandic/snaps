@@ -34,7 +34,7 @@ export function renderCalendar(year?) {
   $('calendar').show();
 }
 
-export function addNote(date: Date, note: string, callback?: (dt: Date) => void) {
+export function addNote(date: Date, note: string, callback?: (dt: Date, selected: boolean) => void) {
   const dt = date.toISOString().slice(0, 10);
   const el = $(`#dt-${dt}`);
   el.css('background', 'maroon');
@@ -42,8 +42,12 @@ export function addNote(date: Date, note: string, callback?: (dt: Date) => void)
   el.attr('title', note);
   el.on('mouseenter', () => $('#calendar-tooltip').html(dt + '<br>' + note));
   el.on('mouseleave', () => $('#calendar-tooltip').html(''));
-  el.on('click', () => $('#calendar-tooltip').html(dt + '<br>' + note));
-  if (callback) el.on('click', () => callback(date));
+  el.on('click', () => {
+    $('#calendar-tooltip').html(dt + '<br>' + note);
+    el.attr('name', el.attr('name') === 'true' ? 'false' : 'true');
+    el.css('background', el.attr('name') === 'true' ? 'blue' : 'maroon');
+    if (callback) callback(date, el.attr('name') === 'true');
+  });
 }
 
 class Calendar extends HTMLElement { // watch for attributes

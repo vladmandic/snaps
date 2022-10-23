@@ -1,15 +1,24 @@
 import { renderCalendar, addNote } from './calendar';
+import { displayImages } from './gallery';
 
-type Image = { seq: string, file: string, date: Date, input: { name: string, size: number, type: string, resolution: [number, number] }, output: { size: number, resolution: [number, number] } }
+export type Image = { seq: string, file: string, date: Date, input: { name: string, size: number, type: string, resolution: [number, number] }, output: { size: number, resolution: [number, number] } }
 
 let res: Response;
 let config;
 const dates: Record<string, Image[]> = {};
+const active: Record<string, boolean> = {};
 
-async function callback(date: Date) {
+async function callback(date: Date, selected: boolean) {
+  // console.log('callback', date, selected);
   const dt = date.toISOString().slice(0, 10);
   if (!dates[dt]) return;
-  console.log('callback', dates[dt]);
+  active[dt] = selected;
+  const filtered: Image[] = [];
+  for (const key of Object.keys(active)) {
+    if (active[key]) filtered.push(...dates[key]);
+  }
+  const sorted = filtered.sort((a, b) => a.date.getTime() - b.date.getTime());
+  displayImages(sorted);
 }
 
 async function start() {

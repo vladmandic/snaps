@@ -6179,9 +6179,13 @@ function addNote(date, note, callback2) {
   el.attr("title", note);
   el.on("mouseenter", () => (0, import_jquery.default)("#calendar-tooltip").html(dt + "<br>" + note));
   el.on("mouseleave", () => (0, import_jquery.default)("#calendar-tooltip").html(""));
-  el.on("click", () => (0, import_jquery.default)("#calendar-tooltip").html(dt + "<br>" + note));
-  if (callback2)
-    el.on("click", () => callback2(date));
+  el.on("click", () => {
+    (0, import_jquery.default)("#calendar-tooltip").html(dt + "<br>" + note);
+    el.attr("name", el.attr("name") === "true" ? "false" : "true");
+    el.css("background", el.attr("name") === "true" ? "blue" : "maroon");
+    if (callback2)
+      callback2(date, el.attr("name") === "true");
+  });
 }
 var Calendar = class extends HTMLElement {
   connectedCallback() {
@@ -6207,15 +6211,43 @@ var Calendar = class extends HTMLElement {
 };
 customElements.define("component-calendar", Calendar);
 
+// src/gallery.ts
+var import_jquery2 = __toESM(require_jquery());
+async function displayImages(images) {
+  (0, import_jquery2.default)("#gallery-title").html(`selected ${images.length} images`);
+  (0, import_jquery2.default)("#gallery-time").html(`${images[0].date.toLocaleTimeString()} - ${images[images.length - 1].date.toLocaleTimeString()}`);
+  (0, import_jquery2.default)("#gallery-date").html(`${images[0].date.toDateString()} - ${images[images.length - 1].date.toDateString()}`);
+}
+var Gallery = class extends HTMLElement {
+  connectedCallback() {
+    this.innerHTML = `
+      <div style="position: fixed; top: 0; right: 0; padding: 8px">
+        <h1 id="gallery-title"></h1>
+        <h3 id="gallery-time"></h3>
+        <h3 id="gallery-date"></h3>
+      </div>
+    `;
+  }
+};
+customElements.define("component-gallery", Gallery);
+
 // src/index.ts
 var res;
 var config;
 var dates = {};
-async function callback(date) {
+var active = {};
+async function callback(date, selected) {
   const dt = date.toISOString().slice(0, 10);
   if (!dates[dt])
     return;
-  console.log("callback", dates[dt]);
+  active[dt] = selected;
+  const filtered = [];
+  for (const key of Object.keys(active)) {
+    if (active[key])
+      filtered.push(...dates[key]);
+  }
+  const sorted = filtered.sort((a, b) => a.date.getTime() - b.date.getTime());
+  displayImages(sorted);
 }
 async function start() {
   console.log("snaps");
