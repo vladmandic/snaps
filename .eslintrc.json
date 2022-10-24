@@ -25,7 +25,7 @@
     "plugin:import/typescript"
   ],
   "ignorePatterns": [
-    "public/*.js", "dist/*.js"
+    "public/*.js", "dist/*.js", "branches/**"
   ],
   "rules": {
     "max-len": [1, 275, 3],

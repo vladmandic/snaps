@@ -3,7 +3,7 @@
   "log": "snaps.log",
   "folder": "images",
   "index": "images/index.json",
-  "interval": 60,
+  "interval": 3,
   "httpPort": 8000,
   "httpsPort": 8001,
   "documentRoot": ".",

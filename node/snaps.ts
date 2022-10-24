@@ -3,11 +3,10 @@ import * as path from 'path';
 import sharp from 'sharp';
 import * as log from '@vladmandic/pilogger';
 import * as httpd from './httpd';
+import { Device, DeviceConfig } from './onvif';
 import * as pkg from '../package.json';
 import * as config from '../config.json';
 
-// any number of objects as `label:url`
-type Secrets = Record<string, string>;
 type Image = { seq: string, file: string, date: Date, input: { name: string, size: number, type: string, resolution: [number, number] }, output: { size: number, resolution: [number, number] } }
 
 // holds updated sequence number
@@ -41,8 +40,7 @@ const getExif = () => ({
 });
 
 // process image and save it as a sequence
-async function saveImage(name: string, res: Response) {
-  const data = await res.blob();
+async function saveImage(name: string, data: Blob) {
   if (data.type !== 'image/jpeg' && data.type !== 'image/png') {
     log.warn('unrecognized file type:', { name, data });
     return;
@@ -65,11 +63,10 @@ async function saveImage(name: string, res: Response) {
   log.data('image:', rec);
 }
 
-async function runInterval(secrets: Secrets) {
-  for (const [name, url] of Object.entries(secrets)) {
-    fetch(url)
-      .then((res) => saveImage(name, res))
-      .catch((err) => log.warn('fetch:', { host: err?.cause?.hostname, syscall: err?.cause?.syscall, code: err?.cause?.code }));
+async function runInterval(devices: Device[]) {
+  for (const device of devices) {
+    const blob = await device.snapshot();
+    if (blob) await saveImage(device.label, blob);
   }
 }
 
@@ -86,9 +83,16 @@ async function main() {
     process.exit(1);
   }
   const data = fs.readFileSync(config.secrets, 'utf8');
-  const secrets = JSON.parse(data) as Secrets;
+  const deviceConfigs = JSON.parse(data) as DeviceConfig[];
+  const devices: Device[] = [];
+  for (const deviceConfig of deviceConfigs) {
+    const device = new Device(deviceConfig);
+    await device.init();
+    log.state('device', { label: device.label, resolution: device.settings.resolution });
+    if (device.image) devices.push(device);
+  }
   await httpd.start(config);
-  setInterval(() => runInterval(secrets), config.interval * 1000);
+  setInterval(() => runInterval(devices), config.interval * 1000);
   ts();
 }
 
