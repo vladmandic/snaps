@@ -25,7 +25,7 @@ async function start() {
   console.log('snaps'); // eslint-disable-line no-console
   res = await fetch('/config.json');
   config = await res.json();
-  res = await fetch(config['index']);
+  res = await fetch('/' + config['index']);
   const data = await res.text();
   for (const line of data.split('\n')) {
     if (line.length < 100) continue;

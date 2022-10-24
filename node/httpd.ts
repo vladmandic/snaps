@@ -162,7 +162,6 @@ export async function start(config) {
   options = {
     insecureHTTPParser: false,
     ...config,
-    // documentRoot: path.join(process.cwd(), config.documentRoot),
   };
 
   if (fs.existsSync(options.sslKey) && fs.existsSync(options.sslCrt)) {

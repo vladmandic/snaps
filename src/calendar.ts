@@ -34,7 +34,7 @@ export function renderCalendar(year?) {
   $('calendar').show();
 }
 
-export function addNote(date: Date, note: string, callback?: (dt: Date, selected: boolean) => void) {
+export function addNote(date: Date, note: string, callback?: (dt: Date, selected: boolean) => void) { // eslint-disable-line no-unused-vars
   const dt = date.toISOString().slice(0, 10);
   const el = $(`#dt-${dt}`);
   el.css('background', 'maroon');
