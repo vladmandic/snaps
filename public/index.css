@@ -2,13 +2,17 @@
 html { font-size: 18px; }
 body { font-size: 1rem; font-family: "CenturyGothic", "Segoe UI", sans-serif; font-variant: small-caps; width: -webkit-fill-available; height: 100%; background: black; color: white; overflow: hidden; margin: 0; }
 
+select { width: 170px; margin-top: 16px; border: none; background: #555; padding: 8px; color: white; font-size: 1rem; font-family: "CenturyGothic"; font-variant: small-caps; }
+select option { color: white; font-size: 1rem; font-family: "CenturyGothic"; font-variant: small-caps; }
+button { width: 170px; border: none; margin-top: 4px; background: #444; padding: 8px; color: white; font-size: 1rem; font-family: "CenturyGothic"; font-variant: small-caps; }
+button:disabled { color: black; }
+
 a:link, a:active, a:visited { color: #777; text-decoration: none; }
 
 .dt, .day, .mo { text-align: right; width: 20px; height: 20px; margin-right: 6px; margin-bottom: 6px; padding: 2px; }
 .day, .mo { font-weight: bold; color: #999; }
 .dt { color: white; font-weight: normal; font-size: 0.8rem; text-align: center; border-radius: 1rem; }
 
-.select { width: 170px; margin-top: 16px; display: none; border: none; background: #333; color: white; font-size: 1rem; font-family: "CenturyGothic"; font-variant: small-caps; }
 .slider { appearance: none; width: 170px; height: 18px; background: #333; outline: none; opacity: 0.5; transition: opacity .2s; visibility: hidden; margin-top: 8px; }
 .slider:hover { opacity: 1; }
 .slider::-webkit-slider-thumb { appearance: none; width: 18px; height: 18px; background: #999; cursor: pointer; }

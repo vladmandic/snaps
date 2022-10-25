@@ -1,7 +1,14 @@
 import $ from 'jquery';
 
+const log = (...msg) => console.log(...msg); // eslint-disable-line no-console
+
 export function renderCalendar(year?) {
+  log('calendar', year);
   if (!year) year = new Date().getFullYear();
+  $('.dt').html('');
+  $('.dt').css('background', '');
+  $('.dt').css('cursor', '');
+  $('.dt').attr('title', '');
   $('#calendar-title').text(year);
   $('#prevyear').attr('href', '#' + (year - 1)).text(year - 1);
   $('#nextyear').attr('href', '#' + (year + 1)).text(year + 1);
@@ -40,7 +47,7 @@ export function addNote(date: Date, note: string, callback?: (dt: Date, selected
   el.css('background', 'maroon');
   el.css('cursor', 'pointer');
   el.attr('title', note);
-  el.on('mouseenter', () => $('#calendar-tooltip').html(dt + '<br>' + note));
+  el.on('mouseenter', () => $('#calendar-tooltip').html(note));
   el.on('mouseleave', () => $('#calendar-tooltip').html(''));
   el.on('click', () => {
     $('#calendar-tooltip').html(dt + '<br>' + note);
@@ -55,7 +62,11 @@ class Calendar extends HTMLElement { // watch for attributes
     this.innerHTML = `
     <div id="calendar" style="visible: hidden; cursor: default; background: #333; width: fit-content; height: 100vh; padding: 8px;">
       <h1 id="calendar-title" style="display: inline-block; font-size: 3rem; margin: 20px 0 0 40px;"></h1>
-      <h3 id="calendar-tooltip" style="display: inline-block; font-size: 1.5rem; margin: 20px 0 0 40px; float: right; vertical-align: top;"></h3>
+      <div style="float: right">
+        <select id="devices"></select><br>
+        <button id="live" type="button">live</button><br>
+        <h3 id="calendar-tooltip" style="display: inline-block; font-size: 1.2rem; margin: 4px 0 0 40px; vertical-align: top;"></h3>
+      </div>
       <h2 style="margin: 0 0 10px 40px;">
         <a id="prevyear" href=""></a>
         <a id="nextyear" href=""></a>

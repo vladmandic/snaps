@@ -3,14 +3,13 @@ import * as path from 'path';
 import sharp from 'sharp';
 import * as log from '@vladmandic/pilogger';
 import * as httpd from './httpd';
+import * as api from './api';
 import { Device, DeviceConfig } from './onvif';
+import { devices, sequence } from './shared';
 import * as pkg from '../package.json';
 import * as config from '../config.json';
 
 type Image = { seq: string, file: string, date: Date, input: { name: string, size: number, type: string, resolution: [number, number] }, output: { size: number, resolution: [number, number] } }
-
-// holds updated sequence number
-const seq: Record<string, number> = {};
 
 // find first available sequence number in a folder
 const initSequence = (name: string): number => {
@@ -45,8 +44,8 @@ async function saveImage(name: string, data: Blob) {
     log.warn('unrecognized file type:', { name, data });
     return;
   }
-  if (!seq[name]) seq[name] = initSequence(name);
-  const num = seq[name].toString().padStart(5, '0');
+  if (!sequence[name]) sequence[name] = initSequence(name);
+  const num = sequence[name].toString().padStart(5, '0');
   const file = path.join(config.folder, `${name}-${num}.jpg`);
   const buffer = new Uint8Array(await data.arrayBuffer());
   // fs.writeFileSync(file, new Uint8Array(buffer)); // just save unprocessed
@@ -57,13 +56,13 @@ async function saveImage(name: string, data: Blob) {
     .jpeg({ quality: config.quality, mozjpeg: true })
     .withMetadata({ exif: getExif() })
     .toFile(file);
-  seq[name]++;
+  sequence[name]++;
   const rec: Image = { seq: num, file, date: new Date(), input: { name, size: data.size, type: data.type, resolution: [metadata.width, metadata.height] }, output: { size: image.size, resolution: [image.width, image.height] } };
   fs.appendFileSync(config.index, JSON.stringify(rec) + '\n');
   log.data('image:', rec);
 }
 
-async function runInterval(devices: Device[]) {
+async function runInterval() {
   for (const device of devices) {
     const blob = await device.snapshot();
     if (blob) await saveImage(device.label, blob);
@@ -84,15 +83,21 @@ async function main() {
   }
   const data = fs.readFileSync(config.secrets, 'utf8');
   const deviceConfigs = JSON.parse(data) as DeviceConfig[];
-  const devices: Device[] = [];
   for (const deviceConfig of deviceConfigs) {
     const device = new Device(deviceConfig);
     await device.init();
     log.state('device', { label: device.label, resolution: device.settings.resolution });
-    if (device.image) devices.push(device);
+    if (device.image) {
+      await device.snapshot();
+      devices.push(device);
+    }
   }
-  await httpd.start(config);
-  setInterval(() => runInterval(devices), config.interval * 1000);
+  const json = devices.map((device) => ({ label: device.label, hostname: device.config.hostname, resolution: device.settings.resolution }));
+  fs.writeFileSync(config.devices, JSON.stringify(json));
+  log.state('device info', { file: config.devices });
+  httpd.start(config);
+  api.init();
+  setInterval(runInterval, config.interval * 1000);
   ts();
 }
 

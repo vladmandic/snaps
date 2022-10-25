@@ -39,8 +39,7 @@ const mime = {
 type Result = { ok: boolean, stat: fs.Stats | null, file: string, redirect: string | null }
 
 function handle(url): Promise<Result> {
-  // eslint-disable-next-line no-param-reassign
-  url = url.split(/[?#]/)[0];
+  url = url.split(/[?#]/)[0]; // eslint-disable-line no-param-reassign
   const result: Result = { ok: false, stat: null, file: '', redirect: null };
   const checkFile = (f) => {
     result.file = f;
@@ -79,83 +78,104 @@ function handle(url): Promise<Result> {
   });
 }
 
+const registrations: { url: string, callback: (req, res) => void }[] = []; // eslint-disable-line no-unused-vars
+
+function plugins(url, req, res) {
+  let handled = false;
+  for (const registration of registrations) {
+    if (url.startsWith(registration.url)) {
+      handled = true;
+      registration.callback(req, res);
+    }
+  }
+  return handled;
+}
+
+export function register(url: string, callback: (req, res) => void) { // eslint-disable-line no-unused-vars
+  log.state('http api', { url });
+  registrations.push({ url, callback });
+}
+
 // process http requests
 async function httpRequest(req, res) {
   const url = decodeURI(req.url);
-  handle(url).then((result) => {
+  const handled = plugins(url, req, res);
+  if (!handled) {
+    handle(url).then((result) => {
     // get original ip of requestor, regardless if it's behind proxy or not
-    const forwarded = (req.headers['forwarded'] || '').match(/for="\[(.*)\]:/);
-    const remote = (Array.isArray(forwarded) ? forwarded[1] : null) || req.headers['x-forwarded-for'] || req.ip || req.socket.remoteAddress;
-    const protocol = req.headers[':scheme']?.toUpperCase() || 'HTTP';
-    if (!result || !result.ok || !result.stat) {
-      res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end('Error 404: Not Found\n', 'utf-8');
-      log.warn(`${protocol}:`, { method: req.method, ver: req.httpVersion, status: res.statusCode, url, remote });
-    } else if (result.redirect) {
-      res.writeHead(301, { Location: result.redirect });
-      res.end();
-      log.data(`${protocol}:`, { method: req.method, ver: req.httpVersion, status: res.statusCode, url, redirect: result.redirect, remote });
-    } else {
-      const input = encodeURIComponent(result.file)
-        .replace(/\*/g, '')
-        .replace(/\?/g, '')
-        .replace(/%2F/g, '/')
-        .replace(/%40/g, '@')
-        .replace(/%20/g, ' ')
-        .replace(/%3A/g, ':')
-        .replace(/%5C/g, '\\');
-      // @ts-ignore method on stat object
-      if (result?.stat?.isFile()) {
-        const ext = String(path.extname(input)).toLowerCase();
-        const contentType = mime[ext] || 'application/octet-stream';
-        const rangeRequest = req.headers['range'];
-        const range = rangeRequest?.replace('bytes=', '').split('-') || [0, result.stat.size - 1];
-        const rangeStart = parseInt(range[0] || 0);
-        const rangeEnd = parseInt(range[1] || result.stat.size - 1);
-        const acceptBrotli = req.headers['accept-encoding'] ? req.headers['accept-encoding'].includes('br') : false; // does target accept brotli compressed data
-        const rangeHeader = !rangeRequest ? {} : {
-          'Content-Range': 'bytes ' + rangeStart + '-' + rangeEnd + '/' + result.stat.size,
-          'Accept-Ranges': 'bytes',
-          'Content-Length': rangeEnd - rangeStart + 1,
-        };
-        const corsHeader = !options.cors ? {} : {
-          'Cross-Origin-Embedder-Policy': 'require-corp',
-          'Cross-Origin-Opener-Policy': 'same-origin',
-        };
-        res.writeHead(rangeRequest ? 206 : 200, {
+      const forwarded = (req.headers['forwarded'] || '').match(/for="\[(.*)\]:/);
+      const remote = (Array.isArray(forwarded) ? forwarded[1] : null) || req.headers['x-forwarded-for'] || req.ip || req.socket.remoteAddress;
+      const protocol = req.headers[':scheme'] || 'http';
+      if (!result || !result.ok || !result.stat) {
+        res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end('Error 404: Not Found\n', 'utf-8');
+        log.warn(`${protocol}:`, { method: req.method, ver: req.httpVersion, status: res.statusCode, url, remote });
+      } else if (result.redirect) {
+        res.writeHead(301, { Location: result.redirect });
+        res.end();
+        log.data(`${protocol}:`, { method: req.method, ver: req.httpVersion, status: res.statusCode, url, redirect: result.redirect, remote });
+      } else {
+        const input = encodeURIComponent(result.file)
+          .replace(/\*/g, '')
+          .replace(/\?/g, '')
+          .replace(/%2F/g, '/')
+          .replace(/%40/g, '@')
+          .replace(/%20/g, ' ')
+          .replace(/%3A/g, ':')
+          .replace(/%5C/g, '\\');
+        // @ts-ignore method on stat object
+        if (result?.stat?.isFile()) {
+          const ext = String(path.extname(input)).toLowerCase();
+          const contentType = mime[ext] || 'application/octet-stream';
+          const rangeRequest = req.headers['range'];
+          const range = rangeRequest?.replace('bytes=', '').split('-') || [0, result.stat.size - 1];
+          const rangeStart = parseInt(range[0] || 0);
+          const rangeEnd = parseInt(range[1] || result.stat.size - 1);
+          const acceptBrotli = req.headers['accept-encoding'] ? req.headers['accept-encoding'].includes('br') : false; // does target accept brotli compressed data
+          const rangeHeader = !rangeRequest ? {} : {
+            'Content-Range': 'bytes ' + rangeStart + '-' + rangeEnd + '/' + result.stat.size,
+            'Accept-Ranges': 'bytes',
+            'Content-Length': rangeEnd - rangeStart + 1,
+          };
+          const corsHeader = !options.cors ? {} : {
+            'Cross-Origin-Embedder-Policy': 'require-corp',
+            'Cross-Origin-Opener-Policy': 'same-origin',
+          };
+          res.writeHead(rangeRequest ? 206 : 200, {
           // 'Access-Control-Allow-Origin': '*', // disabled
           // 'Content-Length': result.stat.size, // not using standard header as it's misleading for compressed streams
-          'Content-Size': result.stat.size, // this is not standard but useful for logging/debugging
-          'Content-Language': 'en',
-          'Content-Type': contentType,
-          'Content-Encoding': (acceptBrotli && !rangeRequest) ? 'br' : '',
-          'Last-Modified': result.stat.mtime.toUTCString(),
-          'Cache-Control': 'no-cache',
-          'X-Content-Type-Options': 'nosniff',
-          'Content-Security-Policy': "media-src 'self' http: https: data:",
-          '`Service-Worker-Allowed': '/',
-          ...corsHeader,
-          ...rangeHeader,
-        });
-        const compress = zlib.createBrotliCompress({ params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 5 } }); // instance of brotli compression with level 5
-        const stream = !rangeRequest
-          ? fs.createReadStream(input)
-          : fs.createReadStream(input, { start: rangeStart, end: rangeEnd });
-        if (!acceptBrotli || rangeRequest) stream.pipe(res); // don't compress data
-        else stream.pipe(compress).pipe(res); // compress data
-        const rangeJSON = rangeRequest ? { range: { start: rangeStart, end: rangeEnd, size: rangeEnd - rangeStart + 1 } } : {};
-        log.data(`${protocol}:`, { method: req.method, ver: req.httpVersion, status: res.statusCode, mime: contentType.replace('; charset=utf-8', ''), size: result.stat.size, ...rangeJSON, url, remote });
+            'Content-Size': result.stat.size, // this is not standard but useful for logging/debugging
+            'Content-Language': 'en',
+            'Content-Type': contentType,
+            'Content-Encoding': (acceptBrotli && !rangeRequest) ? 'br' : '',
+            'Last-Modified': result.stat.mtime.toUTCString(),
+            'Cache-Control': 'no-cache',
+            'X-Content-Type-Options': 'nosniff',
+            'Content-Security-Policy': "media-src 'self' http: https: data:",
+            '`Service-Worker-Allowed': '/',
+            ...corsHeader,
+            ...rangeHeader,
+          });
+          const compress = zlib.createBrotliCompress({ params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 5 } }); // instance of brotli compression with level 5
+          const stream = !rangeRequest
+            ? fs.createReadStream(input)
+            : fs.createReadStream(input, { start: rangeStart, end: rangeEnd });
+          if (!acceptBrotli || rangeRequest) stream.pipe(res); // don't compress data
+          else stream.pipe(compress).pipe(res); // compress data
+          const rangeJSON = rangeRequest ? { range: { start: rangeStart, end: rangeEnd, size: rangeEnd - rangeStart + 1 } } : {};
+          log.data(`${protocol}:`, { method: req.method, ver: req.httpVersion, status: res.statusCode, mime: contentType.replace('; charset=utf-8', ''), size: result.stat.size, ...rangeJSON, url, remote });
+        }
+        // @ts-ignore method on stat object
+        if (result?.stat?.isDirectory()) {
+          res.writeHead(200, { 'Content-Language': 'en', 'Content-Type': 'application/json; charset=utf-8', 'Last-Modified': result.stat.mtime, 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff' });
+          let dir = fs.readdirSync(input);
+          dir = dir.map((f) => path.join(decodeURI(req.url), f));
+          res.end(JSON.stringify(dir), 'utf-8');
+          log.data(`${protocol}:`, { method: req.method, ver: req.httpVersion, status: res.statusCode, mime: 'directory/json', size: result.stat.size, url, remote });
+        }
       }
-      // @ts-ignore method on stat object
-      if (result?.stat?.isDirectory()) {
-        res.writeHead(200, { 'Content-Language': 'en', 'Content-Type': 'application/json; charset=utf-8', 'Last-Modified': result.stat.mtime, 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff' });
-        let dir = fs.readdirSync(input);
-        dir = dir.map((f) => path.join(decodeURI(req.url), f));
-        res.end(JSON.stringify(dir), 'utf-8');
-        log.data(`${protocol}:`, { method: req.method, ver: req.httpVersion, status: res.statusCode, mime: 'directory/json', size: result.stat.size, url, remote });
-      }
-    }
-  });
+    });
+  }
 }
 
 export async function start(config) {

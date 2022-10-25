@@ -1,8 +1,9 @@
 /* eslint-disable no-underscore-dangle */
 
-import { createHash } from 'crypto';
+// import { createHash } from 'crypto';
+// const md5 = (content: string) => createHash('md5').update(content).digest('hex');
 
-const md5 = (content: string) => createHash('md5').update(content).digest('hex');
+import { md5 } from './md5';
 
 const parse = (raw, field, trim = true) => {
   const regex = new RegExp(`${field}=("[^"]*"|[^,]*)`, 'i');
@@ -36,6 +37,7 @@ export class DigestClient {
   basic; // use basic auth, default is false
   statusCode; // which code to treat as `unauthorized`, default is 401
   digest; // calculated digest
+  header: string; // calculated auth header string
   hasAuth; // resulting authentication was sucessfull
   lastAuth; // previously authenticated so will try to reuse
 
@@ -43,6 +45,7 @@ export class DigestClient {
     this.user = user;
     this.password = password;
     this.digest = { nc: 0, algorithm: 'MD5', realm: '' };
+    this.header = '';
     this.hasAuth = false;
     this.statusCode = options?.statusCode || 401;
     this.basic = options?.basic || false;
@@ -55,7 +58,9 @@ export class DigestClient {
       this.hasAuth = false;
       await this.parseAuth(resp.headers.get('www-authenticate'));
       if (this.hasAuth) {
-        const respFinal = await fetch(url, this.addAuth(url, options));
+        const reqInit = this.addAuth(url, options);
+        this.header = reqInit?.headers?.get('authorization');
+        const respFinal = await fetch(url, reqInit);
         if (respFinal.status === this.statusCode) this.hasAuth = false;
         else this.digest.nc++;
         return respFinal;
@@ -93,7 +98,7 @@ export class DigestClient {
     const response = md5(_response);
     const opaqueString = this.digest.opaque !== null ? `opaque="${this.digest.opaque}",` : '';
     const qopString = this.digest.qop ? `qop="${this.digest.qop}",` : '';
-    const digest = `${this.digest.scheme} username="${this.user}",realm="${this.digest.realm}",nonce="${this.digest.nonce}",uri="${uri}",${opaqueString}${qopString},algorithm="${this.digest.algorithm}",response="${response}",nc=${ncString},cnonce="${this.digest.cnonce}"`;
+    const digest = `${this.digest.scheme} username="${this.user}",realm="${this.digest.realm}",nonce="${this.digest.nonce}",uri="${uri}",${opaqueString}${qopString}algorithm="${this.digest.algorithm}",response="${response}",nc=${ncString},cnonce="${this.digest.cnonce}"`;
     options.headers = new Headers();
     options.headers.set('Authorization', digest);
     const _options = {};
