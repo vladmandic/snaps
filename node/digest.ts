@@ -1,8 +1,5 @@
 /* eslint-disable no-underscore-dangle */
 
-// import { createHash } from 'crypto';
-// const md5 = (content: string) => createHash('md5').update(content).digest('hex');
-
 import { md5 } from './md5';
 
 const parse = (raw, field, trim = true) => {

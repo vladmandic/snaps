@@ -2,6 +2,12 @@ import $ from 'jquery';
 
 const log = (...msg) => console.log(...msg); // eslint-disable-line no-console
 
+export function displayCalendar() {
+  $('#gallery-title').html('');
+  $('#live').hide();
+  $('#calendar').show();
+}
+
 export function renderCalendar(year?) {
   log('calendar', year);
   if (!year) year = new Date().getFullYear();
@@ -38,7 +44,6 @@ export function renderCalendar(year?) {
   const today = new Date().toISOString().slice(0, 10);
   $(`#dt-${today}`).css('background', 'gray');
   $(`#dt-${today}`).css('font-weight', 'bold');
-  $('calendar').show();
 }
 
 export function addNote(date: Date, note: string, callback?: (dt: Date, selected: boolean) => void) { // eslint-disable-line no-unused-vars
@@ -60,18 +65,14 @@ export function addNote(date: Date, note: string, callback?: (dt: Date, selected
 class Calendar extends HTMLElement { // watch for attributes
   connectedCallback() { // triggered on insert
     this.innerHTML = `
-    <div id="calendar" style="visible: hidden; cursor: default; background: #333; width: fit-content; height: 100vh; padding: 8px;">
+    <div id="calendar" style="cursor: default; background: #333; width: fit-content; height: 100vh; padding: 8px; display: none">
       <h1 id="calendar-title" style="display: inline-block; font-size: 3rem; margin: 20px 0 0 40px;"></h1>
-      <div style="float: right">
-        <select id="devices"></select><br>
-        <button id="live" type="button">live</button><br>
-        <h3 id="calendar-tooltip" style="display: inline-block; font-size: 1.2rem; margin: 4px 0 0 40px; vertical-align: top;"></h3>
-      </div>
       <h2 style="margin: 0 0 10px 40px;">
         <a id="prevyear" href=""></a>
         <a id="nextyear" href=""></a>
       </h2>
-      <table>
+      <h3 id="calendar-tooltip" style="display: inline-block; font-size: 1.2rem; padding: 8px; margin: 0; position: fixed; bottom: 0; right: 0"></h3>
+      <table id="calendar-table">
         <tr>
           <td id="calendar-days"></td>
           <td>

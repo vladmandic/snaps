@@ -86,10 +86,13 @@ async function main() {
   for (const deviceConfig of deviceConfigs) {
     const device = new Device(deviceConfig);
     await device.init();
-    log.state('device', { label: device.label, resolution: device.settings.resolution });
-    if (device.image) {
+    if (device.profile) {
+      log.state('device', { label: device.label, profile: device.profile });
       await device.snapshot();
+      // device.pan(1, 0, 0, 2000);
       devices.push(device);
+    } else {
+      log.warn('device', { label: device.label, profile: device.profile });
     }
   }
   const json = devices.map((device) => ({ label: device.label, hostname: device.config.hostname, resolution: device.settings.resolution }));

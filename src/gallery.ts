@@ -5,14 +5,13 @@ const log = (...msg) => console.log(...msg); // eslint-disable-line no-console
 
 export function displayImage(image: Image | undefined) {
   if (image) log('image', image);
-  const img = document.getElementById('image') as HTMLImageElement;
+  const img = document.getElementById('gallery-image') as HTMLImageElement;
   img.src = image ? '/' + image.file : '';
   img.alt = image ? JSON.stringify(image) : '';
   img.title = img.alt;
-  $('#image').width(($(document).width() || 0) - ($('#calendar').width() || 0));
-  $('#image-time').html(`${image ? image.date.toLocaleTimeString() : ''}`);
-  $('#image-date').html(`${image ? image.date.toDateString() : ''}`);
-  $('#image-desc').html(`${image ? `sequence ${image?.seq} | file ${image?.file}` : ''}`);
+  $('#gallery-image').width(($(document).width() || 0) - ($('#calendar').width() || 0));
+  $('#gallery-image-date-time').html(`${image ? image.date.toDateString() + ' ' + image.date.toLocaleTimeString() : ''}`);
+  $('#gallery-image-desc').html(`${image ? `sequence ${image?.seq} | file ${image?.file}` : ''}`);
 }
 
 export function clearImage() {
@@ -25,6 +24,7 @@ export function clearImage() {
 }
 
 export function displayImages(images: Image[]) {
+  $('#gallery').show();
   clearImage();
   displayImage(images[0]);
   if (images.length === 0) return;
@@ -47,13 +47,12 @@ class Gallery extends HTMLElement { // watch for attributes
           <h3 id="gallery-date" style="margin: 6px 0 0 0"></h3>
           <h3 id="gallery-time" style="margin: 6px 0 10px 0"></h3>
         </div>
-        <div style="color: #999; position: fixed; top: 0; right: 0; padding: 8px">
+        <div style="color: #999; position: fixed; bottom: 32px; right: 0; padding: 8px">
+          <h3 id="gallery-image-date-time" style="margin: 0; margin-left: 4px"></h3>
           <input type="range" min="1" max="1" value="1" class="slider" id="gallery-range">
-          <h3 id="image-date" style="margin: 6px 0 0 0"></h3>
-          <h3 id="image-time" style="margin: 6px 0 10px 0"></h3>
         </div>
-        <image id="image" syle="margin-top: 8px"></image>
-        <div id="image-desc" style="padding: 8px; color: #999"></div>
+        <image id="gallery-image" syle="margin-top: 8px"></image>
+        <div id="gallery-image-desc" style="padding: 8px; color: #999"></div>
       </div>
     `;
   }

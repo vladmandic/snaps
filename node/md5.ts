@@ -4,20 +4,13 @@
 /* eslint-disable camelcase */
 
 /*
- * A JavaScript implementation of the RSA Data Security, Inc. MD5 Message
- * Digest Algorithm, as defined in RFC 1321.
- * Version 2.2 Copyright (C) Paul Johnston 1999 - 2009
- * Other contributors: Greg Holt, Andrew Kepert, Ydnar, Lostinet
- * Distributed under the BSD License
- * See http://pajhome.org.uk/crypt/md5 for more info.
+ * A JavaScript implementation of the RSA Data Security, Inc. MD5 Message Digest Algorithm, as defined in RFC 1321.
+ * Based on http://pajhome.org.uk/crypt/md5
+ *
+ * Alternatively, just use node:crypto
+ * import { createHash } from 'crypto';
+ * const md5 = (content: string) => createHash('md5').update(content).digest('hex');
  */
-
-/*
- * Configurable variables. You may need to tweak these to be compatible with
- * the server-side, but the defaults work in most cases.
- */
-let hexcase = 0; /* hex output format. 0 - lowercase; 1 - uppercase        */
-let b64pad = ''; /* base-64 pad character. "=" for strict RFC compliance   */
 
 /*
  * These are the functions you'll usually want to call
@@ -30,6 +23,9 @@ export const anyMD5 = (s, e) => rstr2any(rstr_md5(str2rstr_utf8(s)), e);
 export const hexHmacMD5 = (k, d) => rstr2hex(rstr_hmac_md5(str2rstr_utf8(k), str2rstr_utf8(d)));
 export const b64HmacMD5 = (k, d) => rstr2b64(rstr_hmac_md5(str2rstr_utf8(k), str2rstr_utf8(d)));
 export const anyHmacMD5 = (k, d, e) => rstr2any(rstr_hmac_md5(str2rstr_utf8(k), str2rstr_utf8(d)), e);
+
+let hexcase = 0; /* hex output format. 0 - lowercase; 1 - uppercase        */
+let b64pad = ''; /* base-64 pad character. "=" for strict RFC compliance   */
 
 /*
  * Calculate the MD5 of a raw string

@@ -1,5 +1,6 @@
 import $ from 'jquery';
-import { renderCalendar, addNote } from './calendar';
+import { initControls } from './controls';
+import { displayCalendar, renderCalendar, addNote } from './calendar';
 import { displayImages } from './gallery';
 import { displayLive } from './live';
 
@@ -31,7 +32,7 @@ async function calendarCallback(date: Date, selected: boolean) {
 async function parseRawData(data: string, filterName: string) {
   dates = {};
   if (filterName.length === 0) $('#live').attr('disabled', 'true');
-  else $('#live').removeAttr('disabled');
+  else $('#button-live').removeAttr('disabled');
   for (const line of data.split('\n')) {
     if (line.length < 100) continue;
     const rec = JSON.parse(line) as Image;
@@ -42,8 +43,11 @@ async function parseRawData(data: string, filterName: string) {
     dates[date].push(rec);
   }
   renderCalendar();
-  $('#live').off('click');
-  $('#live').on('click', () => displayLive(devices.find((device) => device.label === $('#devices').val() as string)));
+  // renderCalendar();
+  $('#button-calendar').off('click');
+  $('#button-calendar').on('click', () => displayCalendar());
+  $('#button-live').off('click');
+  $('#button-live').on('click', () => displayLive(devices.find((device) => device.label === $('#devices').val() as string)));
   for (const [dt, images] of Object.entries(dates)) addNote(new Date(dt), `available ${images.length}`, calendarCallback);
 }
 
@@ -68,6 +72,7 @@ async function start() {
   res = await fetch('/' + config['index']);
   rawData = await res.text();
   parseRawData(rawData, '');
+  initControls();
 }
 
 window.onload = start;

@@ -4,16 +4,10 @@ import * as httpd from './httpd';
 
 import { devices } from './shared';
 
-async function getSnapshot(label: string | null): Promise<Blob | undefined> {
-  const device = devices.find((d) => d.label === label);
-  if (!device) return undefined;
-  const blob = await device.snapshot();
-  return blob;
-}
-
 async function snapshot(req, res) {
   const params = new URLSearchParams(req.url);
-  const blob = await getSnapshot(params.get('device'));
+  const device = devices.find((d) => d.label === params.get('device'));
+  const blob = device ? await device.snapshot() : undefined;
   const protocol = req.headers[':scheme'] || 'http';
   const forwarded = (req.headers['forwarded'] || '').match(/for="\[(.*)\]:/);
   const remote = (Array.isArray(forwarded) ? forwarded[1] : null) || req.headers['x-forwarded-for'] || req.ip || req.socket.remoteAddress;
@@ -30,6 +24,19 @@ async function snapshot(req, res) {
   }
 }
 
+async function pan(req, res) {
+  const params = new URLSearchParams(req.url);
+  const device = devices.find((d) => d.label === params.get('device'));
+  if (device) device.pan(Number(params.get('x')), Number(params.get('y')), Number(params.get('z')), Number(params.get('duration') || 100));
+  const protocol = req.headers[':scheme'] || 'http';
+  const forwarded = (req.headers['forwarded'] || '').match(/for="\[(.*)\]:/);
+  const remote = (Array.isArray(forwarded) ? forwarded[1] : null) || req.headers['x-forwarded-for'] || req.ip || req.socket.remoteAddress;
+  log.data(`${protocol}:`, { method: 'API', ver: req.httpVersion, status: device ? 202 : 400, url: decodeURI(req.url), remote });
+  res.writeHead(device ? 202 : 400);
+  res.end();
+}
+
 export function init() {
   httpd.register('/snapshot', snapshot);
+  httpd.register('/pan', pan);
 }

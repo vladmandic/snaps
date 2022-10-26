@@ -2,9 +2,9 @@
 html { font-size: 18px; }
 body { font-size: 1rem; font-family: "CenturyGothic", "Segoe UI", sans-serif; font-variant: small-caps; width: -webkit-fill-available; height: 100%; background: black; color: white; overflow: hidden; margin: 0; }
 
-select { width: 170px; margin-top: 16px; border: none; background: #555; padding: 8px; color: white; font-size: 1rem; font-family: "CenturyGothic"; font-variant: small-caps; }
+select { width: 208px; margin-top: 16px; border: none; background: #555; padding: 8px; color: white; font-size: 1rem; font-family: "CenturyGothic"; font-variant: small-caps; }
 select option { color: white; font-size: 1rem; font-family: "CenturyGothic"; font-variant: small-caps; }
-button { width: 170px; border: none; margin-top: 4px; background: #444; padding: 8px; color: white; font-size: 1rem; font-family: "CenturyGothic"; font-variant: small-caps; }
+button { width: 100px; border: none; margin-top: 8px; margin-right: 8px; background: #444; padding: 8px; color: white; font-size: 1rem; font-family: "CenturyGothic"; font-variant: small-caps; }
 button:disabled { color: black; }
 
 a:link, a:active, a:visited { color: #777; text-decoration: none; }
@@ -13,6 +13,6 @@ a:link, a:active, a:visited { color: #777; text-decoration: none; }
 .day, .mo { font-weight: bold; color: #999; }
 .dt { color: white; font-weight: normal; font-size: 0.8rem; text-align: center; border-radius: 1rem; }
 
-.slider { appearance: none; width: 170px; height: 18px; background: #333; outline: none; opacity: 0.5; transition: opacity .2s; visibility: hidden; margin-top: 8px; }
+.slider { appearance: none; width: 300px; height: 32px; background: #333; outline: none; opacity: 0.5; transition: opacity .2s; display: none; }
 .slider:hover { opacity: 1; }
-.slider::-webkit-slider-thumb { appearance: none; width: 18px; height: 18px; background: #999; cursor: pointer; }
+.slider::-webkit-slider-thumb { appearance: none; width: 32px; height: 32px; background: #999; cursor: pointer; }

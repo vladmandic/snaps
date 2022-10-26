@@ -40,3 +40,5 @@ Organize them them by time and create a timelapse
 
 - Pan/Zoom
 - TimeLapse animation
+
+<rtsp://admin:Mon1900@reolink-black:554/h264Preview_01_main>
