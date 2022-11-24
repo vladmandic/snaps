@@ -39,12 +39,15 @@ const getExif = () => ({
 });
 
 // process image and save it as a sequence
-async function saveImage(name: string, data: Blob) {
-  if (data.type !== 'image/jpeg' && data.type !== 'image/png') {
-    log.warn('unrecognized file type:', { name, data });
+async function saveImage(name: string, data: Blob | undefined) {
+  if (!data) {
+    log.warn('image not received:', { name, data });
     return;
   }
-  if (!sequence[name]) sequence[name] = initSequence(name);
+  if (data.type !== 'image/jpeg' && data.type !== 'image/png') {
+    log.warn('unrecognized image type:', { name, data });
+    return;
+  }
   const num = sequence[name].toString().padStart(5, '0');
   const file = path.join(config.folder, `${name}-${num}.jpg`);
   const buffer = new Uint8Array(await data.arrayBuffer());
@@ -62,32 +65,56 @@ async function saveImage(name: string, data: Blob) {
   log.data('image:', rec);
 }
 
-async function runInterval() {
-  for (const device of devices) {
-    const blob = await device.snapshot();
-    if (blob) await saveImage(device.label, blob);
+type Schedule = { date: Date, interval: number, lastActive?: number };
+let currentSchedule: Schedule = { date: new Date(0), interval: 0 };
+
+async function runSchedule(schedules: Schedule[]) {
+  const now = new Date();
+  let newSchedule: Schedule = { date: new Date(0), interval: 0 };
+  for (const s of schedules) {
+    if (s.date.getTime() < now.getTime()) newSchedule = s;
+  }
+  if (newSchedule.date.getTime() !== currentSchedule.date.getTime()) {
+    currentSchedule = newSchedule;
+    log.info('active schedule', currentSchedule);
+  }
+  const elapsed = Math.round((now.getTime() - (currentSchedule.lastActive || 0)) / 1000);
+  if (currentSchedule.interval > 0 && elapsed >= currentSchedule.interval) {
+    currentSchedule.lastActive = now.getTime();
+    for (const device of devices) device.snapshot().then((blob) => saveImage(device.label, blob));
   }
 }
 
-async function main() {
-  log.configure({ inspect: { breakLength: 500 } });
-  if (config.log?.length > 0) log.logFile(config.log);
-  log.headerJson();
-  if (!fs.existsSync(config.secrets)) {
-    log.error('cannot read secrets:', config.secrets);
+function parseSchedule(schedules): Schedule[] {
+  if (!schedules || !Array.isArray(schedules)) {
+    log.error('schedule missing');
     process.exit(1);
   }
-  if (!fs.existsSync(config.folder) || !fs.statSync(config.folder).isDirectory()) {
-    log.error('desitnation folder does not exist:', config.folder);
+  const now = new Date();
+  const list: Schedule[] = [];
+  log.info('schedules', schedules);
+  for (const s of schedules) {
+    const date = new Date(s.year || now.getFullYear(), s.month ? s.month - 1 : now.getMonth(), s.date || now.getDate(), s.hour || now.getHours(), s.min || now.getMinutes(), 0);
+    list.push({ date, interval: s.interval });
+  }
+  const sorted = list.sort((a, b) => a.date.getTime() - b.date.getTime());
+  return sorted;
+}
+
+async function initDevices(secrets) {
+  if (!fs.existsSync(secrets)) {
+    log.error('cannot read secrets:', secrets);
     process.exit(1);
   }
-  const data = fs.readFileSync(config.secrets, 'utf8');
+  const data = fs.readFileSync(secrets, 'utf8');
   const deviceConfigs = JSON.parse(data) as DeviceConfig[];
   for (const deviceConfig of deviceConfigs) {
+    if (config.debug) deviceConfig.debug = true;
     const device = new Device(deviceConfig);
     await device.init();
     if (device.profile) {
       log.state('device', { label: device.label, profile: device.profile });
+      if (!sequence[device.label]) sequence[device.label] = initSequence(device.label);
       await device.snapshot();
       // device.pan(1, 0, 0, 2000);
       devices.push(device);
@@ -95,13 +122,29 @@ async function main() {
       log.warn('device', { label: device.label, profile: device.profile });
     }
   }
+  if (devices.length === 0) {
+    log.error('no devices');
+    process.exit(1);
+  }
   const json = devices.map((device) => ({ label: device.label, hostname: device.config.hostname, resolution: device.settings.resolution }));
   fs.writeFileSync(config.devices, JSON.stringify(json));
   log.state('device info', { file: config.devices });
+  return devices;
+}
+
+async function main() {
+  log.configure({ inspect: { breakLength: 500 } });
+  if (config.log?.length > 0) log.logFile(config.log);
+  log.headerJson();
+  if (!fs.existsSync(config.folder) || !fs.statSync(config.folder).isDirectory()) {
+    log.error('desitnation folder does not exist:', config.folder);
+    process.exit(1);
+  }
+  await initDevices(config.secrets);
   httpd.start(config);
   api.init();
-  setInterval(runInterval, config.interval * 1000);
-  ts();
+  const schedules = parseSchedule(config.schedule);
+  setInterval(() => runSchedule(schedules), 1000);
 }
 
 main();

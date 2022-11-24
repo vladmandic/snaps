@@ -2,7 +2,7 @@ import { Cam, PTZVector, PTZSpeed } from 'onvif/build'; // <https://github.com/a
 import * as log from '@vladmandic/pilogger';
 import { DigestClient } from './digest';
 
-export type DeviceConfig = { label: string, hostname: string, port: number, username: string, password: string }
+export type DeviceConfig = { label: string, hostname: string, port: number, username: string, password: string, debug: boolean }
 export type Move = { type: 'absolute' | 'relative' | 'continous', vector: [number, number, number], speed?: number, timeout?: number, profile?: string }
 
 export class Device {
@@ -54,7 +54,7 @@ export class Device {
       this.video = videoUri?.['uri'];
       this.image = imageUri?.['uri'];
       this.settings = { fps: settings?.[0]?.['framerate'], resolution: [settings?.[0]?.['resolution']?.['width'] || 0, settings?.[0]?.['resolution']?.['height'] || 0] };
-      log.state('onvif init', { label: this.label, hostname: this.cam?.hostname });
+      if (this.config.debug) log.state('onvif init', { label: this.label, hostname: this.cam?.hostname });
       resolve(this.cam as Cam);
     });
     // cam.onvif.on('rawResponse', (xml) => { log.state('<- response was', xml); });
@@ -64,7 +64,7 @@ export class Device {
     if (!this.image) return undefined;
     const res = await this.client.fetch(this.image);
     const blob = res.status === 200 ? res.blob() : undefined;
-    log.state('onvif snapshot', { label: this.label, blob });
+    if (this.config.debug) log.state('onvif snapshot', { label: this.label, blob });
     return blob;
   };
 
@@ -77,14 +77,14 @@ export class Device {
     const velocity: PTZVector = { panTilt: { x, y }, zoom: { x: zoom } };
     // @ts-ignore private
     this.cam.onvif.ptz.continuousMove({ profileToken, velocity, timeout });
-    log.state('onvif pan', { label: this.label, profileToken, velocity, timeout });
+    if (this.config.debug) log.state('onvif pan', { label: this.label, profileToken, velocity, timeout });
     setTimeout(() => this.cam?.stop(), timeout);
   };
 
   home = async () => {
     const callbackHome = (err, res) => {
       if (err) log.warn('onvif home', { label: this.label, err, res });
-      else log.state('onvif home', { label: this.label });
+      else if (this.config.debug) log.state('onvif home', { label: this.label });
     };
     if (!this.cam) return;
     // this.cam.setHomePosition({ profileToken: this.profile?.['PTZConfiguration']?.['token'] || '' }, callbackHome);
@@ -94,7 +94,7 @@ export class Device {
   move = async (options: Move) => {
     const callbackMove = (err, res) => {
       if (err) log.warn('onvif pan', { label: this.label, options, err, res });
-      else log.state('onvif pan', { label: this.label, options, err, res });
+      else if (this.config.debug) log.state('onvif pan', { label: this.label, options, err, res });
     };
     if (!this.cam) return;
     if (!options.profile) options.profile = this.profile?.['PTZConfiguration']?.['token'] || '';
