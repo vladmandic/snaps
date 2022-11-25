@@ -45,6 +45,7 @@ export class Device {
       // cam.getActiveSources((err, data) => log.data('getActiveSources', { err, data }));
       // cam.getCapabilities((err, data) => log.data('getCapabilities', { err, data }));
       // cam.getScopes((err, data) => log.data('getScopes', { err, data }));
+      if (!this.cam) log.warn('onvif init error', { cam: this.cam });
       const promises = [
         new Promise((resolveVideo) => { this.cam?.getStreamUri((_err, data) => resolveVideo(data)); }),
         new Promise((resolveImage) => { this.cam?.getSnapshotUri((_err, data) => resolveImage(data)); }),
@@ -54,7 +55,8 @@ export class Device {
       this.video = videoUri?.['uri'];
       this.image = imageUri?.['uri'];
       this.settings = { fps: settings?.[0]?.['framerate'], resolution: [settings?.[0]?.['resolution']?.['width'] || 0, settings?.[0]?.['resolution']?.['height'] || 0] };
-      if (this.config.debug) log.state('onvif init', { label: this.label, hostname: this.cam?.hostname });
+      // @ts-ignore private
+      if (this.config.debug) log.state('onvif init', { label: this.label, hostname: this.cam?.onvif?.hostname });
       resolve(this.cam as Cam);
     });
     // cam.onvif.on('rawResponse', (xml) => { log.state('<- response was', xml); });
@@ -62,9 +64,14 @@ export class Device {
 
   snapshot = async (): Promise<Blob | undefined> => {
     if (!this.image) return undefined;
-    const res = await this.client.fetch(this.image);
-    const blob = res.status === 200 ? res.blob() : undefined;
-    if (this.config.debug) log.state('onvif snapshot', { label: this.label, blob });
+    let blob: Blob | undefined;
+    try {
+      const res = await this.client.fetch(this.image);
+      blob = res.status === 200 ? await res.blob() : undefined;
+      if (this.config.debug) log.state('onvif snapshot', { label: this.label, status: res.status, msg: res.statusText, size: blob?.size, type: blob?.type });
+    } catch (err) {
+      log.warn('onvif snapshot', err);
+    }
     return blob;
   };
 

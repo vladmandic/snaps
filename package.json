@@ -43,7 +43,7 @@
     "@types/node": "^18.11.9",
     "@vladmandic/pilogger": "^0.4.6",
     "jquery": "^3.6.1",
-    "onvif": "link:../../branches/onvif",
+    "onvif": "link:onvif",
     "sharp": "^0.31.2"
   }
 }

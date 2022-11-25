@@ -9,7 +9,7 @@ export function displayCalendar() {
 }
 
 export function renderCalendar(year?) {
-  log('calendar', year);
+  log('calendar', { year });
   if (!year) year = new Date().getFullYear();
   $('.dt').html('');
   $('.dt').css('background', '');
