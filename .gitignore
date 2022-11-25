@@ -4,3 +4,4 @@ pnpm-lock.yaml
 secrets.json
 snaps.log
 images/*
+onvif/
